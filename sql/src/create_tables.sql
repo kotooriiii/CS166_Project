@@ -4,45 +4,67 @@ DROP TABLE MESSAGE;
 DROP TABLE CONNECTION_USR;
 DROP TABLE USR;
 
+CREATE TABLE USR
+(
+	userId VARCHAR(10) UNIQUE NOT NULL,
+	password VARCHAR(10) NOT NULL,
+	email TEXT NOT NULL,
+	name CHAR(50),
+	dateOfBirth DATE,
+	PRIMARY KEY (userId)
+);
 
-CREATE TABLE USR(
-	userId varchar(10) UNIQUE NOT NULL, 
-	password varchar(10) NOT NULL,
-	email text NOT NULL,
-	name char(50),
-	dateOfBirth date,
-	Primary Key(userId));
+CREATE TABLE WORK_EXPR
+(
+	userId CHAR(10) NOT NULL,
+	company CHAR(50) NOT NULL,
+	role CHAR(50) NOT NULL,
+	location CHAR(50),
+	startDate DATE,
+	endDate DATE,
+	PRIMARY KEY(userId,company,role,startDate),
+	FOREIGN KEY (userId) REFERENCES USR(userId)
+	    ON DELETE CASCADE -- If user is deleted, no longer need User's work experience
+);
 
-CREATE TABLE WORK_EXPR(
-	userId char(10) NOT NULL, 
-	company char(50) NOT NULL, 
-	role char(50) NOT NULL,
-	location char(50),
-	startDate date,
-	endDate date,
-	PRIMARY KEY(userId,company,role,startDate));
+CREATE TABLE EDUCATIONAL_DETAILS
+(
+	userId CHAR(10) NOT NULL,
+	instituitionName CHAR(50) NOT NULL,
+	major CHAR(50) NOT NULL,
+	degree CHAR(50) NOT NULL,
+	startdate DATE,
+	enddate DATE,
+	PRIMARY KEY(userId,major,degree)
+	FOREIGN KEY (userId) REFERENCES USR(userId)
+	    ON DELETE CASCADE -- If user is deleted, no longer need User's work experience
+);
 
-CREATE TABLE EDUCATIONAL_DETAILS(
-	userId char(10) NOT NULL, 
-	instituitionName char(50) NOT NULL, 
-	major char(50) NOT NULL,
-	degree char(50) NOT NULL,
-	startdate date,
-	enddate date,
-	PRIMARY KEY(userId,major,degree));
+CREATE TABLE MESSAGE
+(
+	msgId INTEGER UNIQUE NOT NULL,
+	senderId CHAR(10) NOT NULL,
+	receiverId CHAR(10) NOT NULL,
+	contents CHAR(500) NOT NULL,
+	sendTime TIMESTAMP,
+	deleteStatus INTEGER,
+	status CHAR(30) NOT NULL,
+	PRIMARY KEY(msgId),
+    FOREIGN KEY (senderId) REFERENCES USR(userId)
+        ON DELETE NO ACTION , -- Cannot set to NULL because of requirements. We cannot delete CASCADE because of requirements, other user may want to see!
+    FOREIGN KEY (receiverId) REFERENCES USR(userId)
+        ON DELETE NO ACTION  -- Cannot set to NULL because of requirements. We cannot delete CASCADE because of requirements, other user may want to see!
+);
 
-CREATE TABLE MESSAGE(
-	msgId integer UNIQUE NOT NULL, 
-	senderId char(10) NOT NULL,
-	receiverId char(10) NOT NULL,
-	contents char(500) NOT NULL,
-	sendTime timestamp,
-	deleteStatus integer,
-	status char(30) NOT NULL,
-	PRIMARY KEY(msgId));
+CREATE TABLE CONNECTION_USR
+(
+	userId CHAR(10) NOT NULL,
+	connectionId CHAR(10) NOT NULL,
+	status CHAR(30) NOT NULL,
+	PRIMARY KEY(userId,connectionId),
+    FOREIGN KEY (userId) REFERENCES USR(userId)
+    	ON DELETE CASCADE, -- CASCADE to remove "CONNECTION" between both entities (since one no longer exists)
+    FOREIGN KEY (connectionId) REFERENCES USR(userId)
+    	ON DELETE CASCADE -- CASCADE to remove "CONNECTION" between both entities (since one no longer exists)
 
-CREATE TABLE CONNECTION_USR(
-	userId char(10) NOT NULL, 
-	connectionId char(10) NOT NULL, 
-	status char(30) NOT NULL,
-	PRIMARY KEY(userId,connectionId));
+);
