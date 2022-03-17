@@ -104,7 +104,14 @@
       <option name="project" value="LOCAL" />
       <updated>1647501221580</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="Fixed few errors on friend connection request">
+      <created>1647503700893</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1647503700893</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="UnknownFeatures">
@@ -131,6 +138,7 @@
     <MESSAGE value="Added Foreign Key to create_tables.sql AND created CSV files to load_data.sql" />
     <MESSAGE value="Updates to User abilities.&#10;Added postgressql.jar file. &#10;Added more user abilities to send message, manage friends, and search users&#10;Added create table constraints&#10;Added load_data to load the CSVs and remove non-alphanumerical characters" />
     <MESSAGE value="Added View Messages and Delete message queries. Fixed minor bugs." />
-    <option name="LAST_COMMIT_MESSAGE" value="Added View Messages and Delete message queries. Fixed minor bugs." />
+    <MESSAGE value="Fixed few errors on friend connection request" />
+    <option name="LAST_COMMIT_MESSAGE" value="Fixed few errors on friend connection request" />
   </component>
 </project>

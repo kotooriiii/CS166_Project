@@ -1362,10 +1362,10 @@ public class ProfNetwork {
 
         try {
 
-            String requestQueries = String.format("SELECT C.connectionId, U.name\n" +
+            String requestQueries = String.format("SELECT C.userId, U.name\n" +
                     "FROM CONNECTION_USR C\n" +
-                    "INNER JOIN USR U ON U.userId = C.connectionId\n" +
-                    "WHERE C.status = 'Request' AND C.userId = '%s';", authorisedUser);
+                    "INNER JOIN USR U ON U.userId = C.userId\n" +
+                    "WHERE C.status = 'Request' AND C.connectionId = '%s';", authorisedUser);
 
 
             boolean usermenu = true;
@@ -1706,7 +1706,7 @@ public class ProfNetwork {
                 System.out.println("........PAGE " + (page + 1) + "........");
                 System.out.println("V. View friends");
                 System.out.println("M. Message");
-                if (!isConnected)
+                if (!isConnected && isWithinConnection(esql, authorisedUser, personId))
                     System.out.println("F. Send Friend Connection Request");
                 System.out.println("Q. Quit");
 
@@ -1730,7 +1730,7 @@ public class ProfNetwork {
                     } else if (choice == 'M' || choice == 'm') {
                         NewMessage(esql, authorisedUser, personId);
                         continue;
-                    } else if ((choice == 'F' || choice == 'f') && !isConnected) {
+                    } else if ((choice == 'F' || choice == 'f') && (!isConnected && isWithinConnection(esql, authorisedUser, personId))) {
                         SendRequest(esql, authorisedUser, personId);
                         continue;
                     } else if (choice == 'Q' || choice == 'q') {
@@ -1780,10 +1780,10 @@ public class ProfNetwork {
     /**
      * Gets the page menu for selecting a  person id
      *
-     * @param esql              SQL file
-     * @param list              The collection of person ids
-     * @param authorisedUser    Requester
-     * @param personId          Looking for this ID
+     * @param esql           SQL file
+     * @param list           The collection of person ids
+     * @param authorisedUser Requester
+     * @param personId       Looking for this ID
      */
     private static void SelectPersonMenu(ProfNetwork esql, List<List<String>> list, String authorisedUser, String personId) {
         boolean usermenu = true;
@@ -1954,6 +1954,190 @@ public class ProfNetwork {
             prev = curr;
         }
         return prev[s2.length];
+    }
+
+    private static boolean isWithinConnection(ProfNetwork esql, String authorisedUser, String personId) {
+        String possibleFriendIDSQuery = String.format(
+                "-- Level 1\n" +
+                        "SELECT C.connectionId\n" +
+                        "FROM USR U, CONNECTION_USR C\n" +
+                        "INNER JOIN USR USR1 ON C.connectionId = USR1.userId \n" +
+                        "WHERE U.userId = C.userId AND C.status = 'Accept' AND (U.userId = '¬%s¬')\n" +
+                        "UNION \n" +
+                        "SELECT C2.userId\n" +
+                        "FROM USR U2, CONNECTION_USR C2\n" +
+                        "INNER JOIN USR USR2 ON C2.userId = USR2.userId \n" +
+                        "WHERE U2.userId = C2.connectionId AND C2.status = 'Accept' AND (U2.userId = '¬%s¬')\n" +
+                        "\n" +
+                        "UNION\n" +
+                        "\n" +
+                        "-- Level 2\n" +
+                        "SELECT C.connectionId\n" +
+                        "FROM USR U, CONNECTION_USR C\n" +
+                        "INNER JOIN USR USR1 ON C.connectionId = USR1.userId \n" +
+                        "WHERE U.userId = C.userId AND C.status = 'Accept' AND (U.userId IN \n" +
+                        "\t(\n" +
+                        "\t\tSELECT CA.connectionId\n" +
+                        "\t\tFROM USR UA, CONNECTION_USR CA\n" +
+                        "\t\tINNER JOIN USR USR1A ON CA.connectionId = USR1A.userId \n" +
+                        "\t\tWHERE UA.userId = CA.userId AND CA.status = 'Accept' AND (UA.userId = '¬%s¬')\n" +
+                        "\t\tUNION \n" +
+                        "\t\tSELECT C2A.userId\n" +
+                        "\t\tFROM USR U2A, CONNECTION_USR C2A\n" +
+                        "\t\tINNER JOIN USR USR2A ON C2A.userId = USR2A.userId \n" +
+                        "\t\tWHERE U2A.userId = C2A.connectionId AND C2A.status = 'Accept' AND (U2A.userId = '¬%s¬')\n" +
+                        "\t)\n" +
+                        ")\n" +
+                        "UNION \n" +
+                        "SELECT C2.userId\n" +
+                        "FROM USR U2, CONNECTION_USR C2\n" +
+                        "INNER JOIN USR USR2 ON C2.userId = USR2.userId \n" +
+                        "WHERE U2.userId = C2.connectionId AND C2.status = 'Accept' AND (U2.userId IN \n" +
+                        "\t(\n" +
+                        "\t\tSELECT CA1.connectionId\n" +
+                        "\t\tFROM USR UA1, CONNECTION_USR CA1\n" +
+                        "\t\tINNER JOIN USR USR1A1 ON CA1.connectionId = USR1A1.userId \n" +
+                        "\t\tWHERE UA1.userId = CA1.userId AND CA1.status = 'Accept' AND (UA1.userId = '¬%s¬')\n" +
+                        "\t\tUNION \n" +
+                        "\t\tSELECT C2A1.userId\n" +
+                        "\t\tFROM USR U2A1, CONNECTION_USR C2A1\n" +
+                        "\t\tINNER JOIN USR USR2A1 ON C2A1.userId = USR2A1.userId \n" +
+                        "\t\tWHERE U2A1.userId = C2A1.connectionId AND C2A1.status = 'Accept' AND (U2A1.userId = '¬%s¬')\n" +
+                        "\t)\n" +
+                        ")\n" +
+                        "\n" +
+                        "UNION\n" +
+                        "\n" +
+                        "-- Level 3\n" +
+                        "SELECT C.connectionId\n" +
+                        "FROM USR U, CONNECTION_USR C\n" +
+                        "INNER JOIN USR USR1 ON C.connectionId = USR1.userId \n" +
+                        "WHERE U.userId = C.userId AND C.status = 'Accept' AND (U.userId IN \n" +
+                        "\t(\n" +
+                        "\tSELECT CB.connectionId\n" +
+                        "\tFROM USR UB, CONNECTION_USR CB\n" +
+                        "\tINNER JOIN USR USR1B ON CB.connectionId = USR1B.userId \n" +
+                        "\tWHERE UB.userId = CB.userId AND CB.status = 'Accept' AND (UB.userId IN\n" +
+                        "\t\t(\n" +
+                        "\t\t\tSELECT CA.connectionId\n" +
+                        "\t\t\tFROM USR UA, CONNECTION_USR CA\n" +
+                        "\t\t\tINNER JOIN USR USR1A ON CA.connectionId = USR1A.userId \n" +
+                        "\t\t\tWHERE UA.userId = CA.userId AND CA.status = 'Accept' AND (UA.userId = '¬%s¬')\n" +
+                        "\t\t\tUNION \n" +
+                        "\t\t\tSELECT C2A.userId\n" +
+                        "\t\t\tFROM USR U2A, CONNECTION_USR C2A\n" +
+                        "\t\t\tINNER JOIN USR USR2A ON C2A.userId = USR2A.userId \n" +
+                        "\t\t\tWHERE U2A.userId = C2A.connectionId AND C2A.status = 'Accept' AND (U2A.userId = '¬%s¬')\n" +
+                        "\t\t)\n" +
+                        "\t)\n" +
+                        "\tUNION \n" +
+                        "\tSELECT C2B.userId\n" +
+                        "\tFROM USR U2B, CONNECTION_USR C2B\n" +
+                        "\tINNER JOIN USR USR2B ON C2B.userId = USR2B.userId \n" +
+                        "\tWHERE U2B.userId = C2B.connectionId AND C2B.status = 'Accept' AND (U2B.userId IN \n" +
+                        "\t\t(\n" +
+                        "\t\t\tSELECT C3A.connectionId\n" +
+                        "\t\t\tFROM USR U3A, CONNECTION_USR C3A\n" +
+                        "\t\t\tINNER JOIN USR USR3A ON C3A.connectionId = USR3A.userId \n" +
+                        "\t\t\tWHERE U3A.userId = C3A.userId AND C3A.status = 'Accept' AND (U3A.userId = '¬%s¬')\n" +
+                        "\t\t\tUNION \n" +
+                        "\t\t\tSELECT C4A.userId\n" +
+                        "\t\t\tFROM USR U4A, CONNECTION_USR C4A\n" +
+                        "\t\t\tINNER JOIN USR USR4A ON C4A.userId = USR4A.userId \n" +
+                        "\t\t\tWHERE U4A.userId = C4A.connectionId AND C4A.status = 'Accept' AND (U4A.userId = '¬%s¬')\n" +
+                        "\t\t)\n" +
+                        "\t)\n" +
+                        "\t)\n" +
+                        ")\n" +
+                        "UNION \n" +
+                        "SELECT C2.userId\n" +
+                        "FROM USR U2, CONNECTION_USR C2\n" +
+                        "INNER JOIN USR USR2 ON C2.userId = USR2.userId \n" +
+                        "WHERE U2.userId = C2.connectionId AND C2.status = 'Accept' AND (U2.userId IN \n" +
+                        "\t(\n" +
+                        "\tSELECT C3B.connectionId\n" +
+                        "\tFROM USR U3B, CONNECTION_USR C3B\n" +
+                        "\tINNER JOIN USR USR3B ON C3B.connectionId = USR3B.userId \n" +
+                        "\tWHERE U3B.userId = C3B.userId AND C3B.status = 'Accept' AND (U3B.userId IN \n" +
+                        "\t\t(\n" +
+                        "\t\t\tSELECT C5A.connectionId\n" +
+                        "\t\t\tFROM USR U5A, CONNECTION_USR C5A\n" +
+                        "\t\t\tINNER JOIN USR USR5A ON C5A.connectionId = USR5A.userId \n" +
+                        "\t\t\tWHERE U5A.userId = C5A.userId AND C5A.status = 'Accept' AND (U5A.userId = '¬%s¬')\n" +
+                        "\t\t\tUNION \n" +
+                        "\t\t\tSELECT C6A.userId\n" +
+                        "\t\t\tFROM USR U6A, CONNECTION_USR C6A\n" +
+                        "\t\t\tINNER JOIN USR USR6A ON C6A.userId = USR6A.userId \n" +
+                        "\t\t\tWHERE U6A.userId = C6A.connectionId AND C6A.status = 'Accept' AND (U6A.userId = '¬%s¬')\n" +
+                        "\t\t)\n" +
+                        "\t)\n" +
+                        "\tUNION \n" +
+                        "\tSELECT C4B.userId\n" +
+                        "\tFROM USR U4B, CONNECTION_USR C4B\n" +
+                        "\tINNER JOIN USR USR4B ON C4B.userId = USR4B.userId \n" +
+                        "\tWHERE U4B.userId = C4B.connectionId AND C4B.status = 'Accept' AND (U4B.userId IN \n" +
+                        "\t\t(\n" +
+                        "\t\t\tSELECT C7A.connectionId\n" +
+                        "\t\t\tFROM USR U7A, CONNECTION_USR C7A\n" +
+                        "\t\t\tINNER JOIN USR USR7A ON C7A.connectionId = USR7A.userId \n" +
+                        "\t\t\tWHERE U7A.userId = C7A.userId AND C7A.status = 'Accept' AND (U7A.userId = '¬%s¬')\n" +
+                        "\t\t\tUNION \n" +
+                        "\t\t\tSELECT C8A.userId\n" +
+                        "\t\t\tFROM USR U8A, CONNECTION_USR C8A\n" +
+                        "\t\t\tINNER JOIN USR USR8A ON C8A.userId = USR8A.userId \n" +
+                        "\t\t\tWHERE U8A.userId = C8A.connectionId AND C8A.status = 'Accept' AND (U8A.userId = '¬%s¬')\n" +
+                        "\t\t)\n" +
+                        "\t)\n" +
+                        "\t)\n" +
+                        ");\n"
+                , authorisedUser, authorisedUser, authorisedUser, authorisedUser, authorisedUser, authorisedUser,
+                authorisedUser, authorisedUser, authorisedUser, authorisedUser, authorisedUser, authorisedUser,
+                authorisedUser, authorisedUser).replace("¬", "");
+
+        String alreadyFriendsQuery = String.format("SELECT C.connectionId\n" +
+                "FROM USR U, CONNECTION_USR C\n" +
+                "INNER JOIN USR USR1 ON C.connectionId = USR1.userId \n" +
+                "WHERE U.userId = C.userId AND C.status = 'Accept' AND (U.userId = '¬%s¬')\n" +
+                "UNION \n" +
+                "SELECT C2.userId\n" +
+                "FROM USR U2, CONNECTION_USR C2\n" +
+                "INNER JOIN USR USR2 ON C2.userId = USR2.userId \n" +
+                "WHERE U2.userId = C2.connectionId  AND C2.status = 'Accept' AND (U2.userId = '¬%s¬');", authorisedUser, authorisedUser).replace("¬", "");
+
+        HashSet<String> alreadyFriendsSet = new HashSet<>();
+
+        List<List<String>> alreadyFriendsResult = null;
+        try {
+            alreadyFriendsResult = esql.executeQueryAndReturnResult(alreadyFriendsQuery);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        for (List<String> tuple : alreadyFriendsResult) {
+            String userId = tuple.get(0).trim();
+            alreadyFriendsSet.add(userId);
+        }
+
+
+        List<List<String>> usersResult = null;
+        try {
+            usersResult = esql.executeQueryAndReturnResult(possibleFriendIDSQuery);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+
+        HashSet<String> possibleUserNamesSet = new HashSet<>();
+
+        for (List<String> tuple : usersResult) {
+            String userId = tuple.get(0).trim();
+            possibleUserNamesSet.add(userId);
+        }
+
+        if (!possibleUserNamesSet.contains(personId) && alreadyFriendsSet.size() > 5) {
+            return false;
+        }
+        return true;
     }
 
 
