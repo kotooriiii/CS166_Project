@@ -673,8 +673,8 @@ public class ProfNetwork {
                 final List<String> data = userData.get(0);
                 System.out.println("PROFILE MENU");
                 System.out.println("Hi, " + data.get(3).trim() + ". Nice to see you again.");
-                System.out.println("Username: " + data.get(0).trim()+ "");
-                System.out.println("Email: " + data.get(2).trim()+ "");
+                System.out.println("Username: " + data.get(0).trim() + "");
+                System.out.println("Email: " + data.get(2).trim() + "");
                 System.out.println("Birth date: " + data.get(4).trim() + "");
 
                 System.out.println("---------");
@@ -996,7 +996,7 @@ public class ProfNetwork {
                     "SELECT C.connectionId\n" +
                             "FROM USR U, CONNECTION_USR C\n" +
                             "INNER JOIN USR USR1 ON C.connectionId = USR1.userId \n" +
-                            "WHERE U.userId = C.userId AND C2.status = 'Reject'AND (U.userId = '%s');", authorisedUser);
+                            "WHERE U.userId = C.userId AND C.status = 'Reject'AND (U.userId = '%s');", authorisedUser);
 
             String forgiveResultQuery = String.format(
                     "SELECT C2.userId\n" +
@@ -1075,7 +1075,7 @@ public class ProfNetwork {
                 }
 
             } catch (Exception e) {
-                System.out.println("The friend request was not able to be sent..");
+                System.out.println("You've already sent a friend request.");
             }
 
         } catch (Exception e) {
@@ -1656,9 +1656,9 @@ public class ProfNetwork {
 
                 for (List<String> tuple : friendsListResult) {
                     ArrayList<String> list = new ArrayList<>(tuple);
-                    if(!list.isEmpty())
+                    if (!list.isEmpty())
                         list.remove(0);
-                    if(!list.isEmpty())
+                    if (!list.isEmpty())
                         list.remove(0);
                     friendsListMap.add(list);
                 }
@@ -1763,102 +1763,13 @@ public class ProfNetwork {
 
             String allUserIds = String.format("SELECT U.userId, U.name\n" +
                     "FROM USR U\n" +
-                    "WHERE U.userId LIKE '¬%s¬' OR U.name LIKE '¬%s¬';", personId, personId).replace("¬", "%");
-
-            String workExperience = String.format(
-                    "SELECT U.userId, U.name, W.company, W.role, W.location, W.startDate, W.endDate\n" +
-                            "FROM USR U, WORK_EXPR W\n" +
-                            "WHERE (U.userId = W.userId) AND U.userId IN \n" +
-                            "(\n" +
-                            "\tSELECT USR2.userId\n" +
-                            "\tFROM USR USR2\n" +
-                            "\tWHERE USR2.userId LIKE '¬%s¬' OR USR2.name LIKE '¬%s¬'\n" +
-                            ");"
-                    , personId, personId).replace("¬", "%");
-
-            String educationDetails = String.format(
-                    "SELECT U.userId, U.name, E.instituitionName, E.major, E.degree, E.startdate, E.enddate\n" +
-                            "FROM USR U, EDUCATIONAL_DETAILS E\n" +
-                            "WHERE (U.userId = E.userId) AND U.userId IN \n" +
-                            "(\n" +
-                            "\tSELECT USR2.userId\n" +
-                            "\tFROM USR USR2\n" +
-                            "\tWHERE USR2.userId LIKE '¬%s¬' OR USR2.name LIKE '¬%s¬'\n" +
-                            ");"
-                    , personId, personId).replace("¬", "%");
-            String friendsList = String.format(
-                    "SELECT U.userId, U.name, C.connectionId, USR1.name \n" +
-                            "FROM USR U, CONNECTION_USR C\n" +
-                            "INNER JOIN USR USR1 ON C.connectionId = USR1.userId \n" +
-                            "WHERE C.status = 'Accept' AND U.userId = C.userId AND (U.userId LIKE '¬%s¬' OR U.name LIKE '¬%s¬')\n" +
-                            "UNION \n" +
-                            "SELECT U2.userId, U2.name, C2.userId, USR2.name \n" +
-                            "FROM USR U2, CONNECTION_USR C2\n" +
-                            "INNER JOIN USR USR2 ON C2.userId = USR2.userId \n" +
-                            "WHERE C2.status = 'Accept' AND U2.userId = C2.connectionId AND (U2.userId LIKE '¬%s¬' OR U2.name LIKE '¬%s¬');"
-                    , personId, personId, personId, personId).replace("¬", "%");
+                    "WHERE lower(U.userId) LIKE '¬%s¬' OR lower(U.name) LIKE '¬%s¬';", personId, personId).replace("¬", "%");
 
             List<List<String>> usersResult = esql.executeQueryAndReturnResult(allUserIds);
-            List<List<String>> workExperienceResult = esql.executeQueryAndReturnResult(workExperience);
-            List<List<String>> educationDetailsResult = esql.executeQueryAndReturnResult(educationDetails);
-            List<List<String>> friendsListResult = esql.executeQueryAndReturnResult(friendsList);
-
-            HashMap<String, List<List<String>>> workExperienceMap = new HashMap<>();
-            HashMap<String, List<List<String>>> educationDetailsMap = new HashMap<>();
-            HashMap<String, List<List<String>>> friendsListMap = new HashMap<>();
-
-
-            for (List<String> tuple : workExperienceResult) {
-                String userId = tuple.get(0).trim();
-                ArrayList<String> list = new ArrayList<>(tuple);
-                list.remove(0);
-
-                List<List<String>> entries = workExperienceMap.get(userId);
-                if (entries != null) {
-                    entries.add(list);
-                } else {
-                    ArrayList<List<String>> addingList = new ArrayList<>();
-                    addingList.add(list);
-                    workExperienceMap.put(userId, addingList);
-                }
-            }
-
-
-            for (List<String> tuple : educationDetailsResult) {
-                String userId = tuple.get(0).trim();
-                ArrayList<String> list = new ArrayList<>(tuple);
-                list.remove(0);
-                list.remove(0);
-                List<List<String>> entries = educationDetailsMap.get(userId);
-                if (entries != null) {
-                    entries.add(list);
-                } else {
-                    ArrayList<List<String>> addingList = new ArrayList<>();
-                    addingList.add(list);
-                    educationDetailsMap.put(userId, addingList);
-                }
-            }
-
-
-            for (List<String> tuple : friendsListResult) {
-                String userId = tuple.get(0).trim();
-                ArrayList<String> list = new ArrayList<>(tuple);
-                list.remove(0);
-                list.remove(0);
-                List<List<String>> entries = friendsListMap.get(userId);
-                if (entries != null) {
-                    entries.add(list);
-                } else {
-                    ArrayList<List<String>> addingList = new ArrayList<>();
-                    addingList.add(list);
-                    friendsListMap.put(userId, addingList);
-                }
-            }
 
 
             getSortedSearchPeople(usersResult, personId.toCharArray());
-            //todo for cool feature maybe add how many friends in common
-            SelectPersonMenu(esql, usersResult, authorisedUser, personId, workExperienceMap);
+            SelectPersonMenu(esql, usersResult, authorisedUser, personId);
 
 
         } catch (Exception e) {
@@ -1873,16 +1784,17 @@ public class ProfNetwork {
      * @param list              The collection of person ids
      * @param authorisedUser    Requester
      * @param personId          Looking for this ID
-     * @param workExperienceMap Work Experience for brief desc
      */
-    private static void SelectPersonMenu(ProfNetwork esql, List<List<String>> list, String authorisedUser, String personId, HashMap<String, List<List<String>>> workExperienceMap) {
+    private static void SelectPersonMenu(ProfNetwork esql, List<List<String>> list, String authorisedUser, String personId) {
         boolean usermenu = true;
         int page = 0;
         while (usermenu) {
 
-            HashMap<Integer, String> getNameMap = getSearchListPage(page, list, authorisedUser, personId, workExperienceMap);
+            HashMap<Integer, String> getNameMap = getSearchListPage(page, list, authorisedUser, personId);
 
-            if (getNameMap == null) {
+            if (getNameMap == null && page == 0) {
+                System.out.println("No people found.");
+            } else if (getNameMap == null) {
                 page = 0;
                 continue;
             }
@@ -1930,10 +1842,9 @@ public class ProfNetwork {
      * @param requestQueriesResult Collection of person id
      * @param authorisedUser       Requester
      * @param personId             Searching for this person
-     * @param workExperienceMap    Give a little brief desc of the person
      * @return A map of Key=integer and Value=exact person ID. If page is invalid, returns null
      */
-    private static HashMap<Integer, String> getSearchListPage(int page, List<List<String>> requestQueriesResult, String authorisedUser, String personId, HashMap<String, List<List<String>>> workExperienceMap) {
+    private static HashMap<Integer, String> getSearchListPage(int page, List<List<String>> requestQueriesResult, String authorisedUser, String personId) {
 
         int entries = 0;
         final int RESULTS = 10; //RESULTS in 10 per page
@@ -1954,12 +1865,8 @@ public class ProfNetwork {
             String userId = tuple.get(0).trim();
             String name = tuple.get(1).trim();
 
-            final List<List<String>> workExperienceList = workExperienceMap.get(userId);
-            if (workExperienceList.isEmpty())
-                System.out.println("[" + (entries++) + "] View\t\t" + userId + "\t" + name);
-            else {
-                System.out.println("[" + (entries++) + "] View\t\t" + userId + "\t" + name + "\t" + workExperienceList.get(0).get(2).trim() + " at " + workExperienceList.get(0).get(1).trim()); //todo sort later to get recent employment
-            }
+
+            System.out.println("[" + (entries++) + "] View\t\t" + userId + "\t" + name);
 
             map.put(entries - 1, userId);
 
@@ -1984,8 +1891,9 @@ public class ProfNetwork {
             String personId = in.readLine();
             String existsQuery = String.format("SELECT * FROM USR WHERE userId = '%s';", personId);
             int userNum = esql.executeQuery(existsQuery);
-            if (userNum == 0) {
-                System.out.println("User does not exist.");
+            if (userNum >= 1) {
+                GetProfileExactHELPER(esql, authorisedUser, personId);
+                //System.out.println("User does not exist.");
                 return;
             }
             GetProfileClosestMatchHELPER(esql, authorisedUser, personId);
