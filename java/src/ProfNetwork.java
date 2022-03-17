@@ -405,8 +405,6 @@ public class ProfNetwork {
                         System.out.println("6. Accept/Deny Friend Requests");
                         System.out.println("7. View Profile");
                         System.out.println("8. View Messages");
-
-
                         System.out.println(".........................");
                         System.out.println("9. Log out");
                         switch (readChoice()) {
@@ -474,15 +472,22 @@ public class ProfNetwork {
      **/
     public static int readChoice() {
         int input;
+        boolean isSet = false;
         // returns only if a correct value is given.
         do {
             System.out.print("Please make your choice: ");
+            String line = "";
             try { // read the integer, parse it and break.
-                input = Integer.parseInt(in.readLine());
+                //try to get integer instetad
+                line = in.readLine().trim();
+
+                input = Integer.parseInt(line);
                 break;
-            } catch (Exception e) {
-                System.out.println("Your input is invalid!");
-                continue;
+            } catch (NumberFormatException | IOException e) {
+
+                input = line.charAt(0);
+                input *= -1;
+                break;
             }//end try
         } while (true);
         return input;
@@ -556,6 +561,14 @@ public class ProfNetwork {
     }//end
 
     // Rest of the functions definition go in here
+
+    /**
+     * Friend list menu
+     *
+     * @param esql           sql file
+     * @param authorisedUser requester
+     * @param personId       requesting for this user's friendlist
+     */
     private static void FriendList(ProfNetwork esql, String authorisedUser, String personId) {
         try {
 
@@ -564,47 +577,57 @@ public class ProfNetwork {
                             "SELECT C.connectionId\n" +
                             "FROM USR U, CONNECTION_USR C\n" +
                             "INNER JOIN USR USR1 ON C.connectionId = USR1.userId \n" +
-                            "WHERE U.userId = C.userId AND C.status = 'Accept' AND (U.userId = '%s')\n" +
+                            "WHERE C.status = 'Accept' AND U.userId = C.userId AND C.status = 'Accept' AND (U.userId = '%s')\n" +
                             "UNION \n" +
                             "SELECT C2.userId\n" +
                             "FROM USR U2, CONNECTION_USR C2\n" +
                             "INNER JOIN USR USR2 ON C2.userId = USR2.userId \n" +
-                            "WHERE U2.userId = C2.connectionId AND C2.status = 'Accept' AND (U2.userId = '%s');", personId, personId);
+                            "WHERE C2.status = 'Accept' AND U2.userId = C2.connectionId AND C2.status = 'Accept' AND (U2.userId = '%s');", personId, personId);
 
-            List<List<String>> requestQueriesResult = esql.executeQueryAndReturnResult(query1);
 
             boolean usermenu = true;
             int page = 0;
             while (usermenu) {
-                System.out.println(authorisedUser + "'s FRIEND LIST");
-                System.out.println("---------");
-                HashMap<Integer, String> getNumQueryMap = getFriendListPage(page, requestQueriesResult, authorisedUser, personId, true);
-                HashMap<Integer, String> getNameMap = getFriendListPage(page, requestQueriesResult, authorisedUser, personId, false);
+                List<List<String>> requestQueriesResult = esql.executeQueryAndReturnResult(query1);
+                HashMap<Integer, String> getNumQueryMap = getFriendListPage(page, requestQueriesResult, authorisedUser, personId, true, true);
+                HashMap<Integer, String> getNameMap = getFriendListPage(page, requestQueriesResult, authorisedUser, personId, false, false);
+
+                if (getNumQueryMap == null && page == 0) {
+                    System.out.println("No friends lists to display");
+                    return;
+                } else if (getNumQueryMap == null) {
+                    page = 0;
+                    continue;
+                }
 
                 System.out.println("........PAGE " + (page + 1) + "........");
                 System.out.println("n. Next page");
                 System.out.println("b. Go back a page");
-                System.out.println("Q. Exit Friend Connection Requests");
+                System.out.println("Q. Exit Friend List");
 
-                char choice = readCharChoice();
+                int choice = readChoice();
                 try {
                     int numChoice = Integer.parseInt("" + choice);
                     String query = getNumQueryMap.get(numChoice);
+
+                    if (numChoice < 0) {
+                        throw new NumberFormatException();
+                    }
+
                     if (query == null) {
                         System.out.println("Invalid number.");
                         continue;
                     }
 
-                    if (numChoice < 0) {
-                        System.out.println("No negative numbers allowed");
-                        continue;
-                    }
 
-                    esql.executeUpdate(query);
+                    //esql.executeUpdate(query);
                     String userId = getNameMap.get(numChoice);
+
                     GetProfileExactHELPER(esql, authorisedUser, userId);
                     return;
                 } catch (NumberFormatException e) {
+
+                    choice *= -1;
                     if (choice == 'Q' || choice == 'q')
                         return;
                     else if (choice == 'N' || choice == 'n') {
@@ -622,12 +645,19 @@ public class ProfNetwork {
 
 
         } catch (Exception e) {
-            System.err.println(e.getMessage());
+            e.printStackTrace();
         }
 
     }
 
     //ONLY FOR AUTHORISED
+
+    /**
+     * View Profile menu
+     *
+     * @param esql           sql file
+     * @param authorisedUser requester
+     */
     private static void ViewAccount(ProfNetwork esql, String authorisedUser) {
         boolean usermenu = true;
 
@@ -635,17 +665,17 @@ public class ProfNetwork {
         String query = String.format("SELECT * FROM USR WHERE userId = '%s'", authorisedUser);
         List<List<String>> userData;
         try {
-            userData = esql.executeQueryAndReturnResult(query);
-
-            final List<String> data = userData.get(0);
 
 
             while (usermenu) {
+                userData = esql.executeQueryAndReturnResult(query);
+
+                final List<String> data = userData.get(0);
                 System.out.println("PROFILE MENU");
-                System.out.println("Hi, " + data.get(3) + ". Nice to see you again.");
-                System.out.println("Username: " + data.get(0) + "");
-                System.out.println("Email: " + data.get(2) + "");
-                System.out.println("Birth date: " + data.get(4) + "");
+                System.out.println("Hi, " + data.get(3).trim() + ". Nice to see you again.");
+                System.out.println("Username: " + data.get(0).trim()+ "");
+                System.out.println("Email: " + data.get(2).trim()+ "");
+                System.out.println("Birth date: " + data.get(4).trim() + "");
 
                 System.out.println("---------");
                 System.out.println("1. Change password");
@@ -669,6 +699,13 @@ public class ProfNetwork {
     }
 
     //ONLY FOR AUTHORISED
+
+    /**
+     * Changes a password
+     *
+     * @param esql           sql file
+     * @param authorisedUser requester
+     */
     private static void ChangePassword(ProfNetwork esql, String authorisedUser) {
         try {
             System.out.print("\tEnter your current password: ");
@@ -708,6 +745,12 @@ public class ProfNetwork {
         }
     }
 
+    /**
+     * Menu to send a new message to a personId
+     *
+     * @param esql           sql file
+     * @param authorisedUser sender
+     */
     private static void NewMessage(ProfNetwork esql, String authorisedUser) {
         try {
             System.out.print("\tEnter a username: ");
@@ -719,6 +762,13 @@ public class ProfNetwork {
         }
     }
 
+    /**
+     * Sends a new message to a personId
+     *
+     * @param esql           sql file
+     * @param authorisedUser sender
+     * @param personId       receiver
+     */
     private static void NewMessage(ProfNetwork esql, String authorisedUser, String personId) {
         try {
 
@@ -744,7 +794,7 @@ public class ProfNetwork {
 
             String messageConQuery = String.format(
                     "INSERT INTO MESSAGE (senderId, receiverId, contents, deleteStatus, status)\n" +
-                            "VALUES ('%s', '%s', '%s', 0, \"Delivered\");", authorisedUser, personId, contents);
+                            "VALUES ('%s', '%s', '%s', 0, \'Delivered\');", authorisedUser, personId, contents);
 
 
             esql.executeUpdate(messageConQuery);
@@ -757,6 +807,13 @@ public class ProfNetwork {
 
 
     //ONLY FOR AUTHORISED
+
+    /**
+     * Menu to add a friend
+     *
+     * @param esql           sql file
+     * @param authorisedUser requester
+     */
     private static void SendRequest(ProfNetwork esql, String authorisedUser) {
         try {
             System.out.print("\tEnter a username: ");
@@ -770,6 +827,14 @@ public class ProfNetwork {
     }
 
     //ONLY FOR AUTHORISED
+
+    /**
+     * Sends friend request based on already knowing a personId
+     *
+     * @param esql           sql file
+     * @param authorisedUser requester
+     * @param personId       adding this person
+     */
     private static void SendRequest(ProfNetwork esql, String authorisedUser, String personId) {
         try {
 
@@ -950,19 +1015,19 @@ public class ProfNetwork {
             HashSet<String> rejectedSet = new HashSet<>();
             HashSet<String> forgiveSet = new HashSet<>();
             for (List<String> tuple : alreadyFriendsResult) {
-                String userId = tuple.get(0);
+                String userId = tuple.get(0).trim();
                 alreadyFriendsSet.add(userId);
             }
             for (List<String> tuple : usersResult) {
-                String userId = tuple.get(0);
+                String userId = tuple.get(0).trim();
                 possibleUserNamesSet.add(userId);
             }
             for (List<String> tuple : rejectedResult) {
-                String userId = tuple.get(0);
+                String userId = tuple.get(0).trim();
                 rejectedSet.add(userId);
             }
             for (List<String> tuple : forgiveResult) {
-                String userId = tuple.get(0);
+                String userId = tuple.get(0).trim();
                 forgiveSet.add(userId);
             }
 
@@ -1019,12 +1084,280 @@ public class ProfNetwork {
 
     }
 
+    //ONLY FOR AUTHORISED
     private static void ViewMessages(ProfNetwork esql, String authorisedUser) {
+
+        String requestQueries = String.format(
+                "(\n" +
+                        "\tSELECT M.sendTime, M.receiverId\n" +
+                        "\tFROM MESSAGE  M\n" +
+                        "\tWHERE M.senderId = '%s' AND (M.deleteStatus=0 OR M.deleteStatus=2)\n" +
+                        "\tUNION\n" +
+                        "\tSELECT M2.sendTime, M2.senderId\n" +
+                        "\tFROM MESSAGE M2\n" +
+                        "\tWHERE M2.receiverId = '%s' AND (M2.deleteStatus=0 OR M2.deleteStatus=1)\n" +
+                        ")\n" +
+                        "ORDER BY sendTime DESC;", authorisedUser, authorisedUser);
+
+        try {
+
+            boolean usermenu = true;
+            int page = 0;
+            while (usermenu) {
+                List<List<String>> requestQueriesResult = esql.executeQueryAndReturnResult(requestQueries);
+                HashMap<Integer, String> getNumQueryMap = getMessagePage(page, requestQueriesResult, authorisedUser, true, true);
+                HashMap<Integer, String> getNameMap = getMessagePage(page, requestQueriesResult, authorisedUser, false, false);
+
+                if (getNumQueryMap == null && page == 0) {
+                    System.out.println("No messages with anyone to display");
+                    return;
+                } else if (getNumQueryMap == null) {
+                    page = 0;
+                    continue;
+                }
+                System.out.println("........PAGE " + (page + 1) + "........");
+                System.out.println("n. Next page");
+                System.out.println("b. Go back a page");
+                System.out.println("Q. Exit Messages");
+
+                int choice = readChoice();
+                try {
+                    int numChoice = Integer.parseInt("" + choice);
+                    String query = getNumQueryMap.get(numChoice);
+                    String otherPartyID = getNameMap.get(numChoice);
+
+                    if (numChoice < 0) {
+                        throw new NumberFormatException();
+                    }
+
+                    if (query == null) {
+                        System.out.println("Invalid number.");
+                        continue;
+                    }
+
+
+                    getMessageConversationMenu(esql, authorisedUser, otherPartyID, query);
+
+
+                } catch (NumberFormatException e) {
+                    choice *= -1;
+
+                    if (choice == 'Q' || choice == 'q')
+                        return;
+                    else if (choice == 'N' || choice == 'n') {
+                        page++;
+                        continue;
+                    } else if (choice == 'B' || choice == 'b') {
+                        page--;
+                        continue;
+                    } else {
+                        System.out.println("Invalid character.");
+                        continue;
+                    }
+                }
+            }
+
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
 
 
     }
 
+    private static void getMessageConversationMenu(ProfNetwork esql, String authorisedUser, String otherPartyID, String messagesQuery) {
+
+
+        List<List<String>> requestQueriesResult = null;
+        try {
+
+
+            boolean usermenu = true;
+            int page = 0;
+            while (usermenu) {
+
+
+                requestQueriesResult = esql.executeQueryAndReturnResult(messagesQuery);
+                HashMap<Integer, String> getNumQueryMap = getMessageConvoPage(page, requestQueriesResult, authorisedUser, otherPartyID);
+
+                if (getNumQueryMap == null && page == 0) {
+                    System.out.println("No messages to display");
+                    return;
+                } else if (getNumQueryMap == null) {
+                    page = 0;
+                    continue;
+                }
+
+                System.out.println("........PAGE " + (page + 1) + "........");
+                System.out.println("n. Next page");
+                System.out.println("b. Go back a page");
+                System.out.println("Q. Exit Messages");
+
+                int choice = readChoice();
+                try {
+                    int numChoice = Integer.parseInt("" + choice);
+                    String deleteQuery = getNumQueryMap.get(numChoice);
+
+                    if (numChoice < 0) {
+                        throw new NumberFormatException();
+                    }
+
+                    if (deleteQuery == null) {
+                        System.out.println("Invalid number.");
+                        continue;
+                    }
+
+
+                    esql.executeUpdate(deleteQuery);
+                    System.out.println("Deleted message successful!");
+
+                } catch (NumberFormatException e) {
+
+                    choice *= -1;
+
+                    if (choice == 'Q' || choice == 'q')
+                        return;
+                    else if (choice == 'N' || choice == 'n') {
+                        page++;
+                        continue;
+                    } else if (choice == 'B' || choice == 'b') {
+                        page--;
+                        continue;
+                    } else {
+                        System.out.println("Invalid character.");
+                        continue;
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    private static HashMap<Integer, String> getMessageConvoPage(int page, List<List<String>> requestQueriesResult, String authorisedUser, String otherPartyID) {
+        int entries = 0;
+        final int RESULTS = 10; //RESULTS in 10 per page
+
+        entries = page * RESULTS;
+
+        HashMap<Integer, String> map = new HashMap<>();
+
+        String deleteQuery =
+                "UPDATE MESSAGE \n" +
+                        "SET deleteStatus = %d\n" +
+                        "WHERE msgId = %d;";
+
+
+        if (entries < 0 || entries >= requestQueriesResult.size())
+            return null;
+
+
+        System.out.println("MESSAGES WITH " + otherPartyID);
+        System.out.println("---------");
+
+        for (int i = entries; i < requestQueriesResult.size(); i++) {
+            List<String> tuple = requestQueriesResult.get(i);
+            String timestamp = tuple.get(0).trim();
+            String senderParty = tuple.get(1).trim();
+            String receiverParty = tuple.get(2).trim();
+            String message = tuple.get(3).trim();
+            String msgId = tuple.get(4).trim();
+            String deleteStatus = tuple.get(5).trim();
+            int newStatus = 0;
+            System.out.println(
+                    "[" + (entries++) + "] Delete Message Below\n" +
+                            "[" + timestamp + "] " + senderParty + ": " + message);
+
+            if (senderParty.equals(authorisedUser)) {
+
+                if (deleteStatus.equals("0"))
+                    newStatus = 1;
+                else if (deleteStatus.equals("2"))
+                    newStatus = 3;
+
+                map.put(entries - 1, String.format(deleteQuery, newStatus, Integer.parseInt(msgId)));
+            } else {
+
+                if (deleteStatus.equals("0"))
+                    newStatus = 2;
+                else if (deleteStatus.equals("1"))
+                    newStatus = 3;
+                map.put(entries - 1, String.format(deleteQuery, newStatus, Integer.parseInt(msgId)));
+            }
+
+            if (entries % RESULTS == 0)
+                break;
+        }
+        return map;
+    }
+
+    /**
+     * Gets a list of friend requests being sent to this authorisedUser
+     *
+     * @param page                 0-based page to search
+     * @param requestQueriesResult Collection of all personIds
+     * @param authorisedUser       Requester
+     * @param isQuery              if a query is being requested instead of personId
+     * @return if isQuery is true, returns a hashmap of Key=Integer and String=SQL code to execute, if false, returns personId.. If page is invalid, returns null.
+     */
+    private static HashMap<Integer, String> getMessagePage(int page, List<List<String>> requestQueriesResult, String authorisedUser, boolean isQuery, boolean shouldPrint) {
+        int entries = 0;
+        final int RESULTS = 10; //RESULTS in 10 per page
+
+        entries = page * RESULTS;
+
+        HashMap<Integer, String> map = new HashMap<>();
+
+        String query1 =
+                "(\n" +
+                        "\tSELECT M.sendTime, M.senderId, M.receiverId, M.contents, M.msgId, M.deleteStatus\n" +
+                        "\tFROM MESSAGE M\n" +
+                        "\tWHERE M.senderId = '%s' AND M.receiverId = '%s' AND (M.deleteStatus=0 OR M.deleteStatus=2)\n" +
+                        "\tUNION\n" +
+                        "\tSELECT M2.sendTime, M2.senderId, M2.receiverId, M2.contents, M2.msgId, M2.deleteStatus\n" +
+                        "\tFROM MESSAGE M2\n" +
+                        "\tWHERE M2.receiverId = '%s' AND M2.senderId = '%s' AND (M2.deleteStatus=0 OR M2.deleteStatus=1)\n" +
+                        ")\n" +
+                        "ORDER BY sendTime DESC;\n";
+
+
+        if (entries < 0 || entries >= requestQueriesResult.size())
+            return null;
+
+        if (shouldPrint) {
+            System.out.println("MESSAGES MENU");
+            System.out.println("---------");
+        }
+
+        for (int i = entries; i < requestQueriesResult.size(); i++) {
+            List<String> tuple = requestQueriesResult.get(i);
+            String otherPartyID = tuple.get(1).trim();
+
+            String s = "[" + (entries++) + "] View \t\t" + otherPartyID;
+            if (shouldPrint) {
+                System.out.println(s);
+            }
+            if (isQuery) {
+                map.put(entries - 1, String.format(query1, authorisedUser, otherPartyID, authorisedUser, otherPartyID));
+            } else {
+                map.put(entries - 1, otherPartyID);
+            }
+
+            if (entries % RESULTS == 0)
+                break;
+        }
+        return map;
+    }
+
     //ONLY FOR AUTHORISED
+
+    /**
+     * Accepts or Denies friend requests menu
+     *
+     * @param esql           sql file
+     * @param authorisedUser requester
+     */
     private static void AcceptDenyRequest(ProfNetwork esql, String authorisedUser) {
 
         try {
@@ -1034,34 +1367,40 @@ public class ProfNetwork {
                     "INNER JOIN USR U ON U.userId = C.connectionId\n" +
                     "WHERE C.status = 'Request' AND C.userId = '%s';", authorisedUser);
 
-            List<List<String>> requestQueriesResult = esql.executeQueryAndReturnResult(requestQueries);
 
             boolean usermenu = true;
             int page = 0;
             while (usermenu) {
-                System.out.println("FRIEND CONNECTION REQUESTS");
-                System.out.println("---------");
-                HashMap<Integer, String> getNumQueryMap = getFriendConnectionRequestsPage(page, requestQueriesResult, authorisedUser, true);
-                HashMap<Integer, String> getNameMap = getFriendConnectionRequestsPage(page, requestQueriesResult, authorisedUser, false);
+                List<List<String>> requestQueriesResult = esql.executeQueryAndReturnResult(requestQueries);
+                HashMap<Integer, String> getNumQueryMap = getFriendConnectionRequestsPage(page, requestQueriesResult, authorisedUser, true, true);
+                HashMap<Integer, String> getNameMap = getFriendConnectionRequestsPage(page, requestQueriesResult, authorisedUser, false, false);
+
+                if (getNumQueryMap == null && page == 0) {
+                    System.out.println("No friend connections to display");
+                    return;
+                } else if (getNumQueryMap == null) {
+                    page = 0;
+                    continue;
+                }
 
                 System.out.println("........PAGE " + (page + 1) + "........");
                 System.out.println("n. Next page");
                 System.out.println("b. Go back a page");
                 System.out.println("Q. Exit Friend Connection Requests");
 
-                char choice = readCharChoice();
+                int choice = readChoice();
                 try {
                     int numChoice = Integer.parseInt("" + choice);
                     String query = getNumQueryMap.get(numChoice);
+
+                    if (numChoice < 0) {
+                        throw new NumberFormatException();
+                    }
                     if (query == null) {
                         System.out.println("Invalid number.");
                         continue;
                     }
 
-                    if (numChoice < 0) {
-                        System.out.println("No negative numbers allowed");
-                        continue;
-                    }
 
                     esql.executeUpdate(query);
                     if (numChoice % 2 == 0) {
@@ -1074,6 +1413,8 @@ public class ProfNetwork {
 
 
                 } catch (NumberFormatException e) {
+
+                    choice *= -1;
                     if (choice == 'Q' || choice == 'q')
                         return;
                     else if (choice == 'N' || choice == 'n') {
@@ -1096,7 +1437,17 @@ public class ProfNetwork {
 
     }
 
-    private static HashMap<Integer, String> getFriendListPage(int page, List<List<String>> requestQueriesResult, String authorisedUser, String personId, boolean isQuery) {
+    /**
+     * Gets the friend list page of a personId
+     *
+     * @param page                 0-based
+     * @param requestQueriesResult Collection of person ids
+     * @param authorisedUser       Requester
+     * @param personId             Searching for this PERSON ID
+     * @param isQuery              if a query is being requested instead of personId
+     * @return if isQuery is true, returns a hashmap of Key=Integer and String=SQL code to execute, if false, returns personId.. If page is invalid, returns null.
+     */
+    private static HashMap<Integer, String> getFriendListPage(int page, List<List<String>> requestQueriesResult, String authorisedUser, String personId, boolean isQuery, boolean shouldPrint) {
 
         int entries = 0;
         final int RESULTS = 10; //RESULTS in 10 per page
@@ -1117,12 +1468,21 @@ public class ProfNetwork {
                         "INNER JOIN USR USR2 ON C2.userId = USR2.userId \n" +
                         "WHERE U2.userId = C2.connectionId AND C2.status = 'Accept' AND (U2.userId = '%s');", personId, personId);
 
+        if (entries < 0 || entries >= requestQueriesResult.size())
+            return null;
+
+        if (shouldPrint) {
+            System.out.println(authorisedUser + "'s FRIEND LIST");
+            System.out.println("---------");
+        }
+
         for (int i = entries; i < requestQueriesResult.size(); i++) {
             List<String> tuple = requestQueriesResult.get(i);
-            String userId = tuple.get(0);
-            String name = tuple.get(1);
+            String userId = tuple.get(0).trim();
 
-            System.out.println("[" + (entries++) + "] View\t\t" + userId + "\t" + name);
+            String s = "[" + (entries++) + "] View\t\t" + userId;
+            if (shouldPrint)
+                System.out.println(s);
 
             if (isQuery) {
                 map.put(entries - 1, String.format(query1, userId, userId));
@@ -1139,7 +1499,17 @@ public class ProfNetwork {
     }
 
     //ONLY FOR AUTHORISED
-    private static HashMap<Integer, String> getFriendConnectionRequestsPage(int page, List<List<String>> requestQueriesResult, String authorisedUser, boolean isQuery) {
+
+    /**
+     * Gets a list of friend requests being sent to this authorisedUser
+     *
+     * @param page                 0-based page to search
+     * @param requestQueriesResult Collection of all personIds
+     * @param authorisedUser       Requester
+     * @param isQuery              if a query is being requested instead of personId
+     * @return if isQuery is true, returns a hashmap of Key=Integer and String=SQL code to execute, if false, returns personId.. If page is invalid, returns null.
+     */
+    private static HashMap<Integer, String> getFriendConnectionRequestsPage(int page, List<List<String>> requestQueriesResult, String authorisedUser, boolean isQuery, boolean shouldPrint) {
         int entries = 0;
         final int RESULTS = 20; //RESULTS in 10 per page
 
@@ -1155,11 +1525,22 @@ public class ProfNetwork {
                 "SET status = 'Reject'\n" +
                 "WHERE userId = '%s' AND connectionId = '%s';";
 
+        if (entries < 0 || entries >= requestQueriesResult.size())
+            return null;
+
+        if (shouldPrint) {
+            System.out.println("FRIEND CONNECTION REQUESTS");
+            System.out.println("---------");
+        }
+
         for (int i = entries; i < requestQueriesResult.size(); i++) {
             List<String> tuple = requestQueriesResult.get(i);
-            String userId = tuple.get(0);
-            String name = tuple.get(1);
-            System.out.println("[" + (entries++) + "] Accept\t[" + (entries++) + "] Reject\t\t" + userId + "\t" + name);
+            String userId = tuple.get(0).trim();
+            String name = tuple.get(1).trim();
+
+            String s = "[" + (entries++) + "] Accept\t[" + (entries++) + "] Reject\t\t" + userId + "\t" + name;
+            if (shouldPrint)
+                System.out.println(s);
 
             if (isQuery) {
                 map.put(entries - 2, String.format(query1, userId, authorisedUser));
@@ -1175,13 +1556,20 @@ public class ProfNetwork {
         return map;
     }
 
+    /**
+     * Gets an exact profile based on personId if it exists
+     *
+     * @param esql           SQL file
+     * @param authorisedUser Requester
+     * @param personId       Explicit person ID
+     */
     private static void GetProfileExactHELPER(ProfNetwork esql, String authorisedUser, String personId) {
         try {
 
             String areConnected = String.format(
                     "SELECT C.userId\n" +
                             "FROM CONNECTION_USR C\n" +
-                            "WHERE (C.userId = '%s' AND C.connectionId = '%s') OR (C.userId = '%s' AND C.connectionId = '%s');", authorisedUser, personId, personId, authorisedUser);
+                            "WHERE C.status = 'Accept' AND ((C.userId = '%s' AND C.connectionId = '%s') OR (C.userId = '%s' AND C.connectionId = '%s'));", authorisedUser, personId, personId, authorisedUser);
 
             String userData = String.format(
                     "SELECT U.userId, U.name, U.dateOfBirth\n" +
@@ -1214,64 +1602,75 @@ public class ProfNetwork {
                     "SELECT U.userId, U.name, C.connectionId, USR1.name \n" +
                             "FROM USR U, CONNECTION_USR C\n" +
                             "INNER JOIN USR USR1 ON C.connectionId = USR1.userId \n" +
-                            "WHERE U.userId = C.userId AND (U.userId = '%s')\n" +
+                            "WHERE C.status = 'Accept' AND U.userId = C.userId AND (U.userId = '%s')\n" +
                             "UNION \n" +
                             "SELECT U2.userId, U2.name, C2.userId, USR2.name \n" +
                             "FROM USR U2, CONNECTION_USR C2\n" +
                             "INNER JOIN USR USR2 ON C2.userId = USR2.userId \n" +
-                            "WHERE U2.userId = C2.connectionId AND (U2.userId = '%s');"
+                            "WHERE C2.status = 'Accept' AND U2.userId = C2.connectionId AND (U2.userId = '%s');"
                     , personId, personId).replace("¬", "%");
-
-            boolean isConnected = esql.executeQuery(areConnected) >= 1;
-
-            List<List<String>> userDataResult = esql.executeQueryAndReturnResult(userData);
-            List<List<String>> workExperienceResult = esql.executeQueryAndReturnResult(workExperience);
-            List<List<String>> educationDetailsResult = esql.executeQueryAndReturnResult(educationDetails);
-            List<List<String>> friendsListResult = esql.executeQueryAndReturnResult(friendsList);
-
-            List<List<String>> userDataMap = new ArrayList<>();
-            List<List<String>> workExperienceMap = new ArrayList<>();
-            List<List<String>> educationDetailsMap = new ArrayList<>();
-            List<List<String>> friendsListMap = new ArrayList<>();
-
-            for (List<String> tuple : userDataResult) {
-                ArrayList<String> list = new ArrayList<>(tuple);
-                list.remove(0);
-                userDataMap.add(list);
-            }
-
-
-            for (List<String> tuple : workExperienceResult) {
-                ArrayList<String> list = new ArrayList<>(tuple);
-                list.remove(0);
-                list.remove(0);
-                workExperienceMap.add(list);
-            }
-
-            for (List<String> tuple : educationDetailsResult) {
-                ArrayList<String> list = new ArrayList<>(tuple);
-                list.remove(0);
-                list.remove(0);
-                educationDetailsMap.add(list);
-            }
-
-
-            for (List<String> tuple : friendsListResult) {
-                ArrayList<String> list = new ArrayList<>(tuple);
-                list.remove(0);
-                list.remove(0);
-                friendsListMap.add(list);
-            }
 
             boolean usermenu = true;
             int page = 0;
+
             while (usermenu) {
-                System.out.println(userDataMap.get(0) + "'s PROFILE");
+
+                boolean isConnected = esql.executeQuery(areConnected) >= 1;
+
+                List<List<String>> userDataResult = esql.executeQueryAndReturnResult(userData);
+                List<List<String>> workExperienceResult = esql.executeQueryAndReturnResult(workExperience);
+                List<List<String>> educationDetailsResult = esql.executeQueryAndReturnResult(educationDetails);
+                List<List<String>> friendsListResult = esql.executeQueryAndReturnResult(friendsList);
+
+                List<List<String>> userDataMap = new ArrayList<>();
+                List<List<String>> workExperienceMap = new ArrayList<>();
+                List<List<String>> educationDetailsMap = new ArrayList<>();
+                List<List<String>> friendsListMap = new ArrayList<>();
+
+                for (List<String> tuple : userDataResult) {
+                    ArrayList<String> list = new ArrayList<>(tuple);
+                    if (!list.isEmpty())
+                        list.remove(0);
+                    userDataMap.add(list);
+                }
+
+
+                for (List<String> tuple : workExperienceResult) {
+                    ArrayList<String> list = new ArrayList<>(tuple);
+                    if (!list.isEmpty())
+                        list.remove(0);
+                    if (!list.isEmpty())
+                        list.remove(0);
+                    workExperienceMap.add(list);
+                }
+
+                for (List<String> tuple : educationDetailsResult) {
+                    ArrayList<String> list = new ArrayList<>(tuple);
+                    if (!list.isEmpty())
+                        list.remove(0);
+                    if (!list.isEmpty())
+                        list.remove(0);
+                    educationDetailsMap.add(list);
+                }
+
+
+                for (List<String> tuple : friendsListResult) {
+                    ArrayList<String> list = new ArrayList<>(tuple);
+                    if(!list.isEmpty())
+                        list.remove(0);
+                    if(!list.isEmpty())
+                        list.remove(0);
+                    friendsListMap.add(list);
+                }
+
+
+                System.out.println(userDataMap.get(0).get(0).trim() + "'s PROFILE");
                 System.out.println("Username: " + personId);
+
                 if (isConnected)
-                    System.out.println("Date of Birth: " + userDataMap.get(1));
-                System.out.println("Full name: " + userDataMap.get(0));
-                System.out.println("Friends?: " + ( isConnected ? "✔" : "✘" ));
+                    System.out.println("Date of Birth: " + userDataMap.get(0).get(1).trim());
+                System.out.println("Full name: " + userDataMap.get(0).get(0).trim());
+                System.out.println("Friends?: " + (isConnected ? "✔" : "✘"));
                 System.out.println();
 
                 for (int i = 0; i < educationDetailsMap.size(); i++) {
@@ -1307,23 +1706,31 @@ public class ProfNetwork {
                 System.out.println("........PAGE " + (page + 1) + "........");
                 System.out.println("V. View friends");
                 System.out.println("M. Message");
-                System.out.println("F. Send Friend Connection Request");
+                if (!isConnected)
+                    System.out.println("F. Send Friend Connection Request");
                 System.out.println("Q. Quit");
 
 
-                char choice = readCharChoice();
+                int choice = readChoice();
                 try {
                     int numChoice = Integer.parseInt("" + choice);
+
+                    if (numChoice < 0) {
+                        throw new NumberFormatException();
+                    }
 
                     System.out.println("Number not allowed.");
                     continue;
                 } catch (NumberFormatException e) {
+
+                    choice *= -1;
+
                     if (choice == 'V' || choice == 'v') {
                         FriendList(esql, authorisedUser, personId);
                     } else if (choice == 'M' || choice == 'm') {
                         NewMessage(esql, authorisedUser, personId);
                         continue;
-                    } else if (choice == 'F' || choice == 'f') {
+                    } else if ((choice == 'F' || choice == 'f') && !isConnected) {
                         SendRequest(esql, authorisedUser, personId);
                         continue;
                     } else if (choice == 'Q' || choice == 'q') {
@@ -1344,6 +1751,13 @@ public class ProfNetwork {
         }
     }
 
+    /**
+     * Searches for people
+     *
+     * @param esql           SQL file
+     * @param authorisedUser Requester
+     * @param personId       Looking for?
+     */
     private static void GetProfileClosestMatchHELPER(ProfNetwork esql, String authorisedUser, String personId) {
         try {
 
@@ -1376,12 +1790,12 @@ public class ProfNetwork {
                     "SELECT U.userId, U.name, C.connectionId, USR1.name \n" +
                             "FROM USR U, CONNECTION_USR C\n" +
                             "INNER JOIN USR USR1 ON C.connectionId = USR1.userId \n" +
-                            "WHERE U.userId = C.userId AND (U.userId LIKE '¬%s¬' OR U.name LIKE '¬%s¬')\n" +
+                            "WHERE C.status = 'Accept' AND U.userId = C.userId AND (U.userId LIKE '¬%s¬' OR U.name LIKE '¬%s¬')\n" +
                             "UNION \n" +
                             "SELECT U2.userId, U2.name, C2.userId, USR2.name \n" +
                             "FROM USR U2, CONNECTION_USR C2\n" +
                             "INNER JOIN USR USR2 ON C2.userId = USR2.userId \n" +
-                            "WHERE U2.userId = C2.connectionId AND (U2.userId LIKE '¬%s¬' OR U2.name LIKE '¬%s¬');"
+                            "WHERE C2.status = 'Accept' AND U2.userId = C2.connectionId AND (U2.userId LIKE '¬%s¬' OR U2.name LIKE '¬%s¬');"
                     , personId, personId, personId, personId).replace("¬", "%");
 
             List<List<String>> usersResult = esql.executeQueryAndReturnResult(allUserIds);
@@ -1395,7 +1809,7 @@ public class ProfNetwork {
 
 
             for (List<String> tuple : workExperienceResult) {
-                String userId = tuple.get(0);
+                String userId = tuple.get(0).trim();
                 ArrayList<String> list = new ArrayList<>(tuple);
                 list.remove(0);
 
@@ -1411,7 +1825,7 @@ public class ProfNetwork {
 
 
             for (List<String> tuple : educationDetailsResult) {
-                String userId = tuple.get(0);
+                String userId = tuple.get(0).trim();
                 ArrayList<String> list = new ArrayList<>(tuple);
                 list.remove(0);
                 list.remove(0);
@@ -1427,7 +1841,7 @@ public class ProfNetwork {
 
 
             for (List<String> tuple : friendsListResult) {
-                String userId = tuple.get(0);
+                String userId = tuple.get(0).trim();
                 ArrayList<String> list = new ArrayList<>(tuple);
                 list.remove(0);
                 list.remove(0);
@@ -1452,32 +1866,47 @@ public class ProfNetwork {
         }
     }
 
+    /**
+     * Gets the page menu for selecting a  person id
+     *
+     * @param esql              SQL file
+     * @param list              The collection of person ids
+     * @param authorisedUser    Requester
+     * @param personId          Looking for this ID
+     * @param workExperienceMap Work Experience for brief desc
+     */
     private static void SelectPersonMenu(ProfNetwork esql, List<List<String>> list, String authorisedUser, String personId, HashMap<String, List<List<String>>> workExperienceMap) {
         boolean usermenu = true;
         int page = 0;
         while (usermenu) {
-            System.out.println(personId + " SEARCH");
-            System.out.println("---------");
+
             HashMap<Integer, String> getNameMap = getSearchListPage(page, list, authorisedUser, personId, workExperienceMap);
+
+            if (getNameMap == null) {
+                page = 0;
+                continue;
+            }
 
             System.out.println("........PAGE " + (page + 1) + "........");
             System.out.println("n. Next page");
             System.out.println("b. Go back a page");
             System.out.println("Q. Exit Friend Connection Requests");
 
-            char choice = readCharChoice();
+            int choice = readChoice();
             try {
                 int numChoice = Integer.parseInt("" + choice);
 
                 if (numChoice < 0) {
-                    System.out.println("No negative numbers allowed");
-                    continue;
+                    throw new NumberFormatException();
                 }
 
                 String userId = getNameMap.get(numChoice);
                 GetProfileExactHELPER(esql, authorisedUser, userId);
                 return;
             } catch (NumberFormatException e) {
+
+                choice *= -1;
+
                 if (choice == 'Q' || choice == 'q')
                     return;
                 else if (choice == 'N' || choice == 'n') {
@@ -1494,6 +1923,16 @@ public class ProfNetwork {
         }
     }
 
+    /**
+     * Gets a page entry of a collection
+     *
+     * @param page                 page requested 0-based
+     * @param requestQueriesResult Collection of person id
+     * @param authorisedUser       Requester
+     * @param personId             Searching for this person
+     * @param workExperienceMap    Give a little brief desc of the person
+     * @return A map of Key=integer and Value=exact person ID. If page is invalid, returns null
+     */
     private static HashMap<Integer, String> getSearchListPage(int page, List<List<String>> requestQueriesResult, String authorisedUser, String personId, HashMap<String, List<List<String>>> workExperienceMap) {
 
         int entries = 0;
@@ -1503,16 +1942,23 @@ public class ProfNetwork {
 
         HashMap<Integer, String> map = new HashMap<>();
 
+        if (entries < 0 || entries >= requestQueriesResult.size()) {
+            return null;
+        }
+
+        System.out.println(personId + " SEARCH");
+        System.out.println("---------");
+
         for (int i = entries; i < requestQueriesResult.size(); i++) {
             List<String> tuple = requestQueriesResult.get(i);
-            String userId = tuple.get(0);
-            String name = tuple.get(1);
+            String userId = tuple.get(0).trim();
+            String name = tuple.get(1).trim();
 
             final List<List<String>> workExperienceList = workExperienceMap.get(userId);
             if (workExperienceList.isEmpty())
                 System.out.println("[" + (entries++) + "] View\t\t" + userId + "\t" + name);
             else {
-                System.out.println("[" + (entries++) + "] View\t\t" + userId + "\t" + name + "\t" + workExperienceList.get(0).get(2) + " at " + workExperienceList.get(0).get(1)); //todo sort later to get recent employment
+                System.out.println("[" + (entries++) + "] View\t\t" + userId + "\t" + name + "\t" + workExperienceList.get(0).get(2).trim() + " at " + workExperienceList.get(0).get(1).trim()); //todo sort later to get recent employment
             }
 
             map.put(entries - 1, userId);
@@ -1526,11 +1972,17 @@ public class ProfNetwork {
         return map;
     }
 
+    /**
+     * Searches for people by asking for a person's ID as input.
+     *
+     * @param esql           The SQL class
+     * @param authorisedUser The person requesting this info
+     */
     private static void SearchPeople(ProfNetwork esql, String authorisedUser) {
         try {
             System.out.print("\tEnter a person's name OR userId: ");
             String personId = in.readLine();
-            String existsQuery = String.format("SELECT * FROM USR WHERE userId = '%s'", personId);
+            String existsQuery = String.format("SELECT * FROM USR WHERE userId = '%s';", personId);
             int userNum = esql.executeQuery(existsQuery);
             if (userNum == 0) {
                 System.out.println("User does not exist.");
@@ -1543,14 +1995,28 @@ public class ProfNetwork {
         }
     }
 
+    /**
+     * Sorts all results based on  their Levenshtein distance
+     *
+     * @param list     The collection of people
+     * @param personId Person ID we are comparing to
+     */
     private static void getSortedSearchPeople(List<List<String>> list, char[] personId) {
 
         Collections.sort(list, (b, a) ->
 
-                (dist(a.get(0).toCharArray(), personId) + dist(a.get(1).toCharArray(), personId)) - (dist(b.get(0).toCharArray(), personId) + dist(b.get(1).toCharArray(), personId))
+                (dist(a.get(0).trim().toCharArray(), personId) + dist(a.get(1).trim().toCharArray(), personId)) - (dist(b.get(0).trim().toCharArray(), personId) + dist(b.get(1).trim().toCharArray(), personId))
         );
     }
 
+
+    /**
+     * Levenshtein distance between two strings
+     *
+     * @param s1 String 1
+     * @param s2 String 2
+     * @return the cost between two strings
+     */
     public static int dist(char[] s1, char[] s2) {
 
         // memoize only previous line of distance matrix
