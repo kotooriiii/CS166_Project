@@ -20,6 +20,9 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.*;
 
+//Pregiven data: SELECT userId, COUNT(connectionId) FROM CONNECTION_USR GROUP BY userId ORDER BY COUNT(connectionId) DESC; to find uusers with most friends
+
+
 /**
  * This class defines a simple embedded SQL utility class that is designed to
  * work with PostgreSQL JDBC drivers.
@@ -526,15 +529,13 @@ public class ProfNetwork {
             System.out.print("\tEnter user birthdate in YYYY/MM/DD format (Ex: 1996/03/26): ");
             String birthDate = in.readLine();
 
-            //todo check if user already taken
-
             //Creating empty contact\block lists for a user
             String query = String.format("INSERT INTO USR (userId, password, email, name, dateOfBirth) VALUES ('%s','%s','%s','%s','%s')", login, password, email, name, birthDate);
 
             esql.executeUpdate(query);
             System.out.println("User successfully created!");
         } catch (Exception e) {
-            System.err.println(e.getMessage());
+            System.out.println("User already exists");;
         }
     }//end
 
@@ -1069,7 +1070,7 @@ public class ProfNetwork {
 
                 if (alreadyFriendsSet.size() < 4) {
                     System.out.println("Keep in mind: You have " + (5 - (alreadyFriendsSet.size() + 1)) + " friend connections remaining.");
-                } else if (alreadyFriendsSet.size() == 4)//todo this
+                } else if (alreadyFriendsSet.size() == 4)
                 {
                     System.out.println("Keep in mind: You used your last friend connection (if they accept).");
                 }
@@ -1743,8 +1744,6 @@ public class ProfNetwork {
                 }
             }
 
-
-            //todo show profile somehow , WIP ^
 
         } catch (Exception e) {
             System.err.println(e.getMessage());
