@@ -70,8 +70,11 @@ public class ProfNetwork {
 
             if (!onCampus) {
                 importSQL(this, new File("sql/src/create_tables.sql"));
-                importSQL(this, new File("sql/src/create_index.sql"));
                 importSQL(this, new File("sql/src/load_data.sql"));
+                importSQL(this, new File("sql/src/create_index.sql"));
+                importSQL(this, new File("sql/src/create_trigger.sql"));
+
+
             }
 
         } catch (Exception e) {
@@ -164,6 +167,7 @@ public class ProfNetwork {
         Statement statement = profNetwork._connection.createStatement();
 
         String result = "";
+        boolean isRun = true;
         while (scanner.hasNextLine()) {
             String line = scanner.nextLine();
 
@@ -172,16 +176,24 @@ public class ProfNetwork {
             if (line.startsWith("--") || line.isEmpty())
                 continue;
 
-            result += line;
+            result += " " + line;
+
+            if (line.startsWith("$") && line.endsWith("$")) {
+                isRun = !isRun;
+            }
+            if (!isRun) {
+                continue;
+            }
+
 
             if (!line.contains(";")) {
                 continue;
             }
 
 
-            result = result.substring(0, result.indexOf(';'));
+            result = result.substring(0, result.lastIndexOf(';'));
 
-            statement.executeUpdate(result);
+            statement.execute(result);
             statement.close();
             statement = profNetwork._connection.createStatement();
             result = "";
@@ -535,7 +547,8 @@ public class ProfNetwork {
             esql.executeUpdate(query);
             System.out.println("User successfully created!");
         } catch (Exception e) {
-            System.out.println("User already exists");;
+            System.out.println("User already exists");
+            ;
         }
     }//end
 
@@ -1070,8 +1083,7 @@ public class ProfNetwork {
 
                 if (alreadyFriendsSet.size() < 4) {
                     System.out.println("Keep in mind: You have " + (5 - (alreadyFriendsSet.size() + 1)) + " friend connections remaining.");
-                } else if (alreadyFriendsSet.size() == 4)
-                {
+                } else if (alreadyFriendsSet.size() == 4) {
                     System.out.println("Keep in mind: You used your last friend connection (if they accept).");
                 }
 
@@ -1331,9 +1343,15 @@ public class ProfNetwork {
             System.out.println("---------");
         }
 
+        ArrayList<String> alreadyIDList = new ArrayList<>();
+
         for (int i = entries; i < requestQueriesResult.size(); i++) {
             List<String> tuple = requestQueriesResult.get(i);
             String otherPartyID = tuple.get(1).trim();
+
+            if (alreadyIDList.contains(otherPartyID))
+                continue;
+            alreadyIDList.add(otherPartyID);
 
             String s = "[" + (entries++) + "] View \t\t" + otherPartyID;
             if (shouldPrint) {
@@ -1910,7 +1928,7 @@ public class ProfNetwork {
      */
     private static void getSortedSearchPeople(List<List<String>> list, char[] personId) {
 
-        Collections.sort(list, (b, a) ->
+        Collections.sort(list, (a, b) ->
 
                 (dist(a.get(0).trim().toCharArray(), personId) + dist(a.get(1).trim().toCharArray(), personId)) - (dist(b.get(0).trim().toCharArray(), personId) + dist(b.get(1).trim().toCharArray(), personId))
         );
