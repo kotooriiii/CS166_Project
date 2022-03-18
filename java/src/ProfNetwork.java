@@ -1,4 +1,7 @@
 /*
+ * Carlos Miranda - 862246355
+ * Angelica Simityan - 862220199
+ *
  * Template JAVA User Interface
  * =============================
  *
@@ -586,6 +589,7 @@ public class ProfNetwork {
     private static void FriendList(ProfNetwork esql, String authorisedUser, String personId) {
         try {
 
+            //Gets friend list that are accepted.
             String query1 =
                     String.format("-- Level 1\n" +
                             "SELECT C.connectionId\n" +

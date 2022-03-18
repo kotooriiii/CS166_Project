@@ -2,14 +2,11 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="969d8b54-8710-45ff-996f-0816baa437d6" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/sql/src/create_trigger.sql" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/java/src/GUI.form" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/java/src/GUI.java" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/java/src/ProfNetwork.java" beforeDir="false" afterPath="$PROJECT_DIR$/java/src/ProfNetwork.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/sql/scripts/create_db.sh" beforeDir="false" afterPath="$PROJECT_DIR$/sql/scripts/create_db.sh" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/sql/src/create_index.sql" beforeDir="false" afterPath="$PROJECT_DIR$/sql/src/create_index.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/sql/src/create_tables.sql" beforeDir="false" afterPath="$PROJECT_DIR$/sql/src/create_tables.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sql/src/create_trigger.sql" beforeDir="false" afterPath="$PROJECT_DIR$/sql/src/create_trigger.sql" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -131,7 +128,14 @@
       <option name="project" value="LOCAL" />
       <updated>1647505829393</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="Extra credit addition. &#10;- Triggers&#10;- Index&#10;- Leivenstein distance&#10;- Distinct message convo">
+      <created>1647579739364</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1647579739364</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="UnknownFeatures">
@@ -161,6 +165,7 @@
     <MESSAGE value="Fixed few errors on friend connection request" />
     <MESSAGE value="Fixed minor mistake on profile viewing when already friends." />
     <MESSAGE value="Added a query example on top to get users with lots of connections" />
-    <option name="LAST_COMMIT_MESSAGE" value="Added a query example on top to get users with lots of connections" />
+    <MESSAGE value="Extra credit addition. &#10;- Triggers&#10;- Index&#10;- Leivenstein distance&#10;- Distinct message convo" />
+    <option name="LAST_COMMIT_MESSAGE" value="Extra credit addition. &#10;- Triggers&#10;- Index&#10;- Leivenstein distance&#10;- Distinct message convo" />
   </component>
 </project>

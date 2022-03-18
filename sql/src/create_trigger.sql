@@ -1,5 +1,6 @@
 CREATE SEQUENCE IF NOT EXISTS MESSAGE_id_seq START WITH 27812;
 
+-- Increments the MESSAGE id to the next value when we dont provide one.
 CREATE OR REPLACE FUNCTION MESSAGE_msgId_func()
 RETURNS "trigger" AS
 $BODY$
