@@ -23,9 +23,6 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.*;
 
-//Pregiven data: SELECT userId, COUNT(connectionId) FROM CONNECTION_USR GROUP BY userId ORDER BY COUNT(connectionId) DESC; to find uusers with most friends
-
-
 /**
  * This class defines a simple embedded SQL utility class that is designed to
  * work with PostgreSQL JDBC drivers.
@@ -64,6 +61,7 @@ public class ProfNetwork {
             this._connection = DriverManager.getConnection(url, user, passwd);
             System.out.println("Done");
 
+            //clean the CSV given files to produce alphanumeric tuples
             cleanCSV(new File("data/Connection.csv"), new int[]{0, 1});
             cleanCSV(new File("data/Edu_Det.csv"), new int[]{0});
             cleanCSV(new File("data/Message.csv"), new int[]{1, 2});
@@ -71,6 +69,7 @@ public class ProfNetwork {
             cleanCSV(new File("data/USR.csv"), new int[]{0});
             cleanCSVSpacesOk(new File("data/USRProd.csv"), new int[]{3});
 
+            // If not on campus, then run the SQL function below to mimic create_db.sh
             if (!onCampus) {
                 importSQL(this, new File("sql/src/create_tables.sql"));
                 importSQL(this, new File("sql/src/load_data.sql"));
@@ -87,6 +86,13 @@ public class ProfNetwork {
         }//end catch
     }//end ProfNetwork
 
+    /**
+     * uses regular expressions to remove characters not passing a non-alphanumeric filter. Will keep spaces in this function. Produces a new file by the name of the given file appended with "Prod" at the end.
+     * @param file The CSV file to read from
+     * @param indeces What indexes (columns) to clean
+     * @throws FileNotFoundException
+     *
+     */
     private static void cleanCSVSpacesOk(File file, int[] indeces) throws FileNotFoundException {
 
         ArrayList<String> lines = new ArrayList<>();
@@ -125,6 +131,13 @@ public class ProfNetwork {
         }
     }
 
+    /**
+     * uses regular expressions to remove characters not passing a non-alphanumeric filter. Will not keep spaces in this function. Produces a new file by the name of the given file appended with "Prod" at the end.
+     * @param file The CSV file to read from
+     * @param indeces What indexes (columns) to clean
+     * @throws FileNotFoundException
+     *
+     */
     private static void cleanCSV(File file, int[] indeces) throws FileNotFoundException {
 
         ArrayList<String> lines = new ArrayList<>();
@@ -164,6 +177,13 @@ public class ProfNetwork {
         }
     }
 
+    /**
+     * A custom made SQL interpreter which tokenizes words. Removes comments and makes sure to only run when spots a semicolon.
+     * @param profNetwork The SQL file
+     * @param file The given file to import the SQL code from
+     * @throws FileNotFoundException
+     * @throws SQLException
+     */
     private static void importSQL(ProfNetwork profNetwork, File file) throws FileNotFoundException, SQLException {
         Scanner scanner = new Scanner(file);
 
@@ -485,7 +505,7 @@ public class ProfNetwork {
     }//end Greeting
 
     /*
-     * Reads the users choice given from the keyboard
+     * Reads the users choice given from the keyboard. MODIFIED TO ALSO READ CHARACTERS IF CANNOT PARSE INTO AN INTEGER. IF CANNOT PARSE, TAKE FIRST CHARACTER AND CONVERT TO ASCII equivalent number.
      * @int
      **/
     public static int readChoice() {

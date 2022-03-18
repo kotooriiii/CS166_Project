@@ -1,3 +1,5 @@
+-- Carlos Miranda - 862246355
+-- Angelica Simityan - 862220199
 CREATE SEQUENCE IF NOT EXISTS MESSAGE_id_seq START WITH 27812;
 
 -- Increments the MESSAGE id to the next value when we dont provide one.

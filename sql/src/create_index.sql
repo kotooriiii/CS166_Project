@@ -1,3 +1,6 @@
+-- Carlos Miranda - 862246355
+-- Angelica Simityan - 862220199
+
 CREATE INDEX USR_name_index -- Faster searches on "Search People" func
 ON USR ("name");
 
