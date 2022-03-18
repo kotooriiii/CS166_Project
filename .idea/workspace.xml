@@ -3,12 +3,6 @@
   <component name="ChangeListManager">
     <list default="true" id="969d8b54-8710-45ff-996f-0816baa437d6" name="Default Changelist" comment="More documentation.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/java/src/ProfNetwork.java" beforeDir="false" afterPath="$PROJECT_DIR$/java/src/ProfNetwork.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/sql/src/create_index.sql" beforeDir="false" afterPath="$PROJECT_DIR$/sql/src/create_index.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/sql/src/create_tables.sql" beforeDir="false" afterPath="$PROJECT_DIR$/sql/src/create_tables.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/sql/src/create_trigger.sql" beforeDir="false" afterPath="$PROJECT_DIR$/sql/src/create_trigger.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/sql/src/load_data.sql" beforeDir="false" afterPath="$PROJECT_DIR$/sql/src/load_data.sql" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -144,7 +138,21 @@
       <option name="project" value="LOCAL" />
       <updated>1647628497808</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="More documentation.">
+      <created>1647631039433</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1647631039433</updated>
+    </task>
+    <task id="LOCAL-00011" summary="More documentation.">
+      <created>1647631088064</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1647631088064</updated>
+    </task>
+    <option name="localTasksCounter" value="12" />
     <servers />
   </component>
   <component name="UnknownFeatures">
@@ -176,6 +184,7 @@
     <MESSAGE value="Added a query example on top to get users with lots of connections" />
     <MESSAGE value="Extra credit addition. &#10;- Triggers&#10;- Index&#10;- Leivenstein distance&#10;- Distinct message convo" />
     <MESSAGE value="Added more documentation and added ability to run on lab computers." />
-    <option name="LAST_COMMIT_MESSAGE" value="Added more documentation and added ability to run on lab computers." />
+    <MESSAGE value="More documentation." />
+    <option name="LAST_COMMIT_MESSAGE" value="More documentation." />
   </component>
 </project>
