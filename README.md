@@ -1,9 +1,5 @@
-# CS166_Project
+# LinkedIn SQL Mini Project
  A database using SQL, triggers, indexes, and Java to run a semi-decent console GUI.
- 
- GitHub: [Link](https://github.com/kotooriiii/CS166_Project)
- 
- Note: For submission, please ignore the .idea folder. This folder is used by IntelliJ IDE to remember workspace variables. The output folder holds the compiled CLASSes. 
  
  Requirements:
  - Since this project was created on a local Windows computer. Some requirements must be met given you are also working on a Windows PC: <br>
